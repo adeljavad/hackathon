@@ -14,17 +14,17 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, Rege
 import os
 from django.conf import settings
 from django.apps import apps
-
+import similarity
 conf = {
     'INSTALLED_APPS': [
         'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'support',
-        ],
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'support',
+    ],
     'DATABASES': {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -36,8 +36,7 @@ conf = {
 settings.configure(**conf)
 apps.populate(settings.INSTALLED_APPS)
 
-
-from  support.models import QA,Pepole
+from support.models import QA, Pepole
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -45,16 +44,16 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger()
 
-MMENUE, MOTADAVEL, BIO = range(3)
+MMENUE, MOTADAVEL, RECOM,SEND, BIO = range(5)
 
 supp = "پشتیبانی و رفع مشکل"
 ques = "سوالات متداول"
-tecn="لیست متخصصین"
+tecn = "لیست متخصصین"
 
 
 def start(bot, update):
     # reply_keyboard = [['سوالات متداول', 'پشتیبانی و رفع مشکل']]
-    reply_keyboard = [[supp, ques,tecn]]
+    reply_keyboard = [[supp, ques, tecn]]
     logger.info("شروع بات")
     update.message.reply_text(
         'لطفا ابتدا «سوالات متداول» را مطالعه فرمایید. در این بخش پرتکرار‌ترین سوالات به صورت کامل پاسخ داده شده‌اند.' +
@@ -67,47 +66,76 @@ def start(bot, update):
 
 def mainmenue(bot, update):
     logger.info("main menue")
-    reply_keyboard = [[]]
-    list1 = list(QA.objects.all().values_list('title'))
-    print(list1)
-    for l in list1:
-         print(l[0])
-         reply_keyboard[0].append( l[0])
-
-    # reply_keyboard = [['درباره آزمون', 'شرایط سنی حضور در آزمون']]
     user = update.message.from_user
     logger.info("main menue  %s: %s", user.first_name, update.message.text)
-    update.message.reply_text('یکی از موارد زیر را انتخاب کنید.',
-                              reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
-    return MOTADAVEL
+    update.message.reply_text('سوال خود را وارد کنید.')
+    return RECOM
+
+
+
+def recommendation(bot, update):
+    logger.info("recommendation")
+    reply_keyboard = [[]]
+    faq = list(QA.objects.all().values_list('title'))
+
+    candidate_questions=[]
+    for l in faq:
+        print(l[0])
+        candidate_questions.append(l[0])
+    print('faq:', candidate_questions)
+    text= update.message.text
+
+    similar_questions = similarity.get_top_similarity(text, candidate_questions, 2)
+    if len(similar_questions) != 0:
+        print('similar_questions:', similar_questions)
+        reply_keyboard[0]=similar_questions
+        reply_keyboard[0].append('خیر')
+        reply_keyboard[0].append("بازگشت")
+        user = update.message.from_user
+        logger.info("main menue  %s: %s", user.first_name, update.message.text)
+        update.message.reply_text('آیا سوال شما شبیه یکی از موارد هست؟ روی آن کلیک کنید',
+
+                                  reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
+        return MOTADAVEL
+    else:
+        return SEND
+
+
+
+def send(bot, update):
+    update.message.reply_text('به کارشناس ارسال شد')
 
 
 def tecnic(bot, update):
     logger.info("tecnic")
     reply_keyboard = [[]]
-    list1 = list(Pepole.objects.all().values_list('title'))
+    list1 = list(Pepole.objects.all().values_list('last_name'))
     print(list1)
     for l in list1:
-         print(l[0])
-         reply_keyboard[0].append( l[0])
+        print(l[0])
+        reply_keyboard[0].append(l[0])
+    update.message.reply_text('یکی از متخصصین را انتخاب کنید',
+                              reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
+    return MOTADAVEL
+
+
+def motadavel(bot, update):
+    logger.info("main menue")
+    reply_keyboard = [[]]
+    list1 = list(QA.objects.all().values_list('title'))
+    print(list1)
+    for l in list1:
+        print(l[0])
+        reply_keyboard[0].append(l[0])
+    user = update.message.from_user
+    logger.info("main menue  %s: %s", user.first_name, update.message.text)
 
     # reply_keyboard = [['درباره آزمون', 'شرایط سنی حضور در آزمون']]
     user = update.message.from_user
     logger.info("main menue  %s: %s", user.first_name, update.message.text)
     update.message.reply_text('یکی از موارد زیر را انتخاب کنید.',
                               reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
-    return MOTADAVEL
-
-
-def motadavel(bot, update):
-    user = update.message.from_user
-    photo_file = update.message.photo[-1].get_file()
-    logger.info(photo_file)
-    photo_file.download('user_photo.jpg')
-    logger.info("Photo of %s: %s", user.first_name, 'user_photo.jpg')
-    update.message.reply_text('Gorgeous! Now, send me your location please, '
-                              'or send /skip if you don\'t want to.')
-    return bio
+    return MMENUE
 
 
 def skip_photo(bot, update):
@@ -154,16 +182,19 @@ def main():
 
         states={
             MMENUE: [RegexHandler(pattern='^({})$'.format(supp), callback=mainmenue),
-                     RegexHandler(pattern='^({})$'.format(ques), callback=motadavel)
+                     RegexHandler(pattern='^({})$'.format(ques), callback=motadavel),
                      RegexHandler(pattern='^({})$'.format(tecn), callback=tecnic)],
 
             MOTADAVEL: [RegexHandler(pattern='^(aa)$', callback=motadavel),
-                        CommandHandler('رد کردن', skip_photo)],
+                        CommandHandler('رد کردن', skip_photo), RegexHandler(pattern='^({})$'.format('خیر'), callback=send)],
+            RECOM: [MessageHandler(Filters.text, recommendation)],
+
+            SEND: [MessageHandler(Filters.text, send)],
 
             BIO: [MessageHandler(Filters.text, bio)]
         },
 
-        fallbacks=[CommandHandler('انصراف', cancel)]
+        fallbacks=[RegexHandler(pattern='^({})$'.format('بازگشت'), callback=start)]
     )
 
     dp.add_handler(conv_handler)
@@ -171,7 +202,7 @@ def main():
     # log all errors
     dp.add_error_handler(error)
 
-    updater.start_polling(poll_interval=5)
+    updater.start_polling(poll_interval=1)
     updater.idle()
 
 
