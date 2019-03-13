@@ -63,7 +63,7 @@ class Ticket(models.Model):
     ref = models.IntegerField(default=0, null=True, verbose_name="ارجاع")
 
     def __str__(self):
-        return str(self.user_id)  # self.phone_number+','+str(
+        return str(self.user_id)
 
     class Meta:
         managed: True
