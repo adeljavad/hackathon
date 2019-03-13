@@ -11,17 +11,50 @@ from telegram import (ReplyKeyboardMarkup, Bot)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
                           ConversationHandler)
 
+import os
+from django.conf import settings
+from django.apps import apps
+
+conf = {
+    'INSTALLED_APPS': [
+        'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'support',
+        ],
+    'DATABASES': {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join('.', 'db.sqlite3'),
+        }
+    }
+}
+
+settings.configure(**conf)
+apps.populate(settings.INSTALLED_APPS)
+
+
+from  support.models import QA,Pepole
+
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
 
 logger = logging.getLogger()
 
-MMENUE, PHOTO, A, BIO = range(4)
+MMENUE, MOTADAVEL, BIO = range(3)
+
+supp = "پشتیبانی و رفع مشکل"
+ques = "سوالات متداول"
+tecn="لیست متخصصین"
 
 
 def start(bot, update):
-    reply_keyboard = [['سوالات متداول', 'پشتیبانی و رفع مشکل']]
+    # reply_keyboard = [['سوالات متداول', 'پشتیبانی و رفع مشکل']]
+    reply_keyboard = [[supp, ques,tecn]]
     logger.info("شروع بات")
     update.message.reply_text(
         'لطفا ابتدا «سوالات متداول» را مطالعه فرمایید. در این بخش پرتکرار‌ترین سوالات به صورت کامل پاسخ داده شده‌اند.' +
@@ -34,15 +67,39 @@ def start(bot, update):
 
 def mainmenue(bot, update):
     logger.info("main menue")
-    reply_keyboard = [['درباره آزمون', 'شرایط سنی حضور در آزمون']]
+    reply_keyboard = [[]]
+    list1 = list(QA.objects.all().values_list('title'))
+    print(list1)
+    for l in list1:
+         print(l[0])
+         reply_keyboard[0].append( l[0])
+
+    # reply_keyboard = [['درباره آزمون', 'شرایط سنی حضور در آزمون']]
     user = update.message.from_user
     logger.info("main menue  %s: %s", user.first_name, update.message.text)
     update.message.reply_text('یکی از موارد زیر را انتخاب کنید.',
                               reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
-    return PHOTO
+    return MOTADAVEL
 
 
-def photo(bot, update):
+def tecnic(bot, update):
+    logger.info("tecnic")
+    reply_keyboard = [[]]
+    list1 = list(Pepole.objects.all().values_list('title'))
+    print(list1)
+    for l in list1:
+         print(l[0])
+         reply_keyboard[0].append( l[0])
+
+    # reply_keyboard = [['درباره آزمون', 'شرایط سنی حضور در آزمون']]
+    user = update.message.from_user
+    logger.info("main menue  %s: %s", user.first_name, update.message.text)
+    update.message.reply_text('یکی از موارد زیر را انتخاب کنید.',
+                              reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
+    return MOTADAVEL
+
+
+def motadavel(bot, update):
     user = update.message.from_user
     photo_file = update.message.photo[-1].get_file()
     logger.info(photo_file)
@@ -58,7 +115,6 @@ def skip_photo(bot, update):
     logger.info("User %s did not send a photo.", user.first_name)
     update.message.reply_text('I bet you look great! Now, send me your location please, '
                               'or send /skip.')
-
     return bio
 
 
@@ -86,8 +142,8 @@ def error(bot, update):
 def main():
     # Create the Updater and pass it your bot's token.
     print(BotConfig.bot_token)
-    bot = Bot(token=BotConfig.bot_token,            #   "1239525175:e523a3ce66aae472c159d110ca4a24541f129a51",
-              base_url=BotConfig.base_url ,         #   "https://tapi.bale.ai/",
+    bot = Bot(token=BotConfig.bot_token,  # "1239525175:e523a3ce66aae472c159d110ca4a24541f129a51",
+              base_url=BotConfig.base_url,  # "https://tapi.bale.ai/",
               base_file_url="https://tapi.bale.ai/file/")
     updater = Updater(bot=bot)
 
@@ -97,10 +153,12 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            MMENUE: [RegexHandler(pattern='^(سوالات متداول|پشتیبانی و رفع مشکل|Other)$', callback=mainmenue)],
+            MMENUE: [RegexHandler(pattern='^({})$'.format(supp), callback=mainmenue),
+                     RegexHandler(pattern='^({})$'.format(ques), callback=motadavel)
+                     RegexHandler(pattern='^({})$'.format(tecn), callback=tecnic)],
 
-            PHOTO: [MessageHandler(Filters.photo, photo),
-                    CommandHandler('رد کردن', skip_photo)],
+            MOTADAVEL: [RegexHandler(pattern='^(aa)$', callback=motadavel),
+                        CommandHandler('رد کردن', skip_photo)],
 
             BIO: [MessageHandler(Filters.text, bio)]
         },
@@ -113,7 +171,7 @@ def main():
     # log all errors
     dp.add_error_handler(error)
 
-    updater.start_polling(poll_interval=2)
+    updater.start_polling(poll_interval=5)
     updater.idle()
 
 
