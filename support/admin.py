@@ -27,10 +27,7 @@ class QaAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('owner','qa_type','title', 'content', 'category'), }
          ),
-        ('اطلاعات اضافی', {
-            'classes': ('collapse',),
-            'fields': ('ref','pepole'),
-        }),
+
     )
 
     list_filter = ['qa_type', 'title']
