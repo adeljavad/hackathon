@@ -3,22 +3,6 @@ import os
 
 from sqlalchemy import desc, cast, Date
 
-from balebot.utils.logger import Logger
-from bot.models.address_info import AddressInfo
-from bot.models.address_info_log import AddressInfoLog
-from bot.models.admin import Admin
-from bot.models.admin_migrate_table import AdminMigrate
-from bot.models.bank_branch import BankBranch
-from bot.models.base import Session
-from bot.models.description_info import DescriptionInfo
-from bot.models.description_info_log import DescriptionInfoLog
-from bot.models.like import Like
-from bot.models.location_info import LocationInfo
-from bot.models.location_info_log import LocationInfoLog
-from bot.models.migrate_table import Migrate
-from bot.models.phone_info import PhoneInfo
-from bot.models.phone_info_log import PhoneInfoLog
-from bot.models.user import User
 from config import BotConfig
 from constants import LogMessage, UserData, InfoTypes
 
