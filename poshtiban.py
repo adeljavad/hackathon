@@ -68,7 +68,7 @@ def start(bot, update):
     return MMENUE
 
 
-def mainmenue(bot, update, user_data):
+def mainmenue(bot, update):
     logger.info("main menue")
     user = update.message.from_user
     logger.info("main menue  %s: %s", user.first_name, update.message.text)
@@ -76,7 +76,7 @@ def mainmenue(bot, update, user_data):
     return RECOM
 
 
-def recommendation(bot, update,user_data):
+def recommendation(bot, update):
     logger.info("recommendation")
     reply_keyboard = [[]]
     faq = list(QA.objects.all().values_list('title'))
@@ -112,7 +112,7 @@ def send(bot, update):
     update.message.reply_text('به کارشناس ارسال شد')
 
 
-def tecnic(bot, update, user_data):
+def tecnic(bot, update):
     logger.info("tecnic")
     reply_keyboard = [[]]
     list1 = list(Pepole.objects.all().values_list('last_name'))
@@ -187,15 +187,15 @@ def main():
 
         states={
             MMENUE: [RegexHandler(pattern='^({})$'.format(supp), callback=mainmenue),
-                     RegexHandler(pattern='^({})$'.format(ques), callback=motadavel, pass_user_data=True),
-                     RegexHandler(pattern='^({})$'.format(tecn), callback=tecnic, pass_user_data=True)],
+                     RegexHandler(pattern='^({})$'.format(ques), callback=motadavel),
+                     RegexHandler(pattern='^({})$'.format(tecn), callback=tecnic)],
 
-            MOTADAVEL: [RegexHandler(pattern='^(aa)$', callback=motadavel, pass_user_data=True),
+            MOTADAVEL: [RegexHandler(pattern='^(aa)$', callback=motadavel),
                         CommandHandler('رد کردن', skip_photo),
                         RegexHandler(pattern='^({})$'.format('خیر'), callback=send)],
-            RECOM: [MessageHandler(Filters.text, recommendation, pass_user_data=True)],
+            RECOM: [MessageHandler(Filters.text, recommendation)],
 
-            SEND: [MessageHandler(Filters.text, send, pass_user_data=True)],
+            SEND: [MessageHandler(Filters.text, send)],
 
             BIO: [MessageHandler(Filters.text, bio)]
         },
