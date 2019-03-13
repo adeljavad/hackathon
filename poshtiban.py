@@ -102,20 +102,12 @@ def recommendation(bot, update,user_data):
         return SEND
 
 
-def send(bot, update,user_data):
+def send(bot, update):
     list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id'))
     tecnic_id = random.choice(list1)
 
-    key = update.message.text.partition(' ')[2]
 
-    # Load value
-    try:
-        value = user_data[key]
-        update.message.reply_text(value)
-    except KeyError:
-        update.message.reply_text('Not found')
-
-    bot.send_message(chat_id=tecnic_id[0], text=value)
+    bot.send_message(chat_id=tecnic_id[0], text=update.user_data)
 
     update.message.reply_text('به کارشناس ارسال شد')
 
@@ -194,7 +186,7 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            MMENUE: [RegexHandler(pattern='^({})$'.format(supp), callback=mainmenue, pass_user_data=True),
+            MMENUE: [RegexHandler(pattern='^({})$'.format(supp), callback=mainmenue),
                      RegexHandler(pattern='^({})$'.format(ques), callback=motadavel, pass_user_data=True),
                      RegexHandler(pattern='^({})$'.format(tecn), callback=tecnic, pass_user_data=True)],
 
