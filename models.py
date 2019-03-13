@@ -44,6 +44,7 @@ class QA(models.Model):
     category = models.CharField(null=True, max_length=30, verbose_name="گروه سئوال")
     ref = models.IntegerField(default=0, null=True, verbose_name="ارجاع")
 
+    pepole = models.ForeignKey(Pepole, on_delete=models.CASCADE, verbose_name='سوال کنند', null=True, default=1)
     def __str__(self):
         return str(self.title)  # self.phone_number+','+str(
 
