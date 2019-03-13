@@ -103,7 +103,11 @@ def recommendation(bot, update):
 
 
 def send(bot, update):
+
+    bot.send_message(chat_id=update.message.chat_id, text= update.message.text)
+
     update.message.reply_text('به کارشناس ارسال شد')
+
 
 
 def tecnic(bot, update):
@@ -114,6 +118,8 @@ def tecnic(bot, update):
     for l in list1:
         print(l[0])
         reply_keyboard[0].append(l[0])
+
+    reply_keyboard[0].append("بازگشت")
     update.message.reply_text('یکی از متخصصین را انتخاب کنید',
                               reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
     return MOTADAVEL

@@ -51,3 +51,22 @@ class QA(models.Model):
         managed: True
         verbose_name = 'سئوال'
         verbose_name_plural = 'سئوال و جواب'
+
+
+class Ticket(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name=_('owner'), null=True,
+                              default=1)
+    user_id = models.ForeignKey(Pepole, on_delete=models.PROTECT,  null=True,   default=1, verbose_name="کد کاربر")
+    tecn_id = models.IntegerField(default=1, null=True,  verbose_name="کد متخصص")
+    qa_id = models.ForeignKey(QA, on_delete=models.PROTECT,  null=True,   default=1, verbose_name="شماره سئوال")
+    create_date = models.DateField(null=True,  verbose_name="تاریخ ایجاد")
+    ref = models.IntegerField(default=0, null=True, verbose_name="ارجاع")
+
+    def __str__(self):
+        return str(self.user_id)  # self.phone_number+','+str(
+
+    class Meta:
+        managed: True
+        verbose_name = 'تیکت'
+        verbose_name_plural = 'تیکت'
+
