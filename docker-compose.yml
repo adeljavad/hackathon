@@ -1,0 +1,43 @@
+version: '3'
+services:
+  pg_branches_locator_bot:
+    image: registry.bale.ai:2443/balepostgres:1.4.0
+    container_name: pg_branches_locator_bot
+    environment:
+      - POSTGRES_USER=branches_locator_bot
+      - POSTGRES_PASSWORD=sdhglgslahglaskjdfsfglashg@lsakjgs1231
+      - POSTGRES_DB=bank_branches_db
+      - TZ=Asia/Tehran
+    ports:
+      - 5440:5432
+    volumes:
+      - /home/elenoon/docker/volumes/pg_branches_locator_bot_3/postgres/:/var/lib/postgresql/data/
+
+  branches_locator_bot:
+    image: registry2.bale.ai:2443/branches_locator_bot:1.0.6
+    container_name: branches_locator_bot
+    restart: always
+    environment:
+      # PostgreSQL Config
+      - POSTGRES_USER=branches_locator_bot
+      - POSTGRES_PASSWORD=sdhglgslahglaskjdfsfglashg@lsakjgs1231
+      - POSTGRES_DB=bank_branches_db
+      - POSTGRES_PORT=5432
+      - POSTGRES_HOST=pg_branches_locator_bot
+      # Config
+      - BASE_URL=https://tapi.bale.ai/
+      - TOKEN=1239525175:e523a3ce66aae472c159d110ca4a24541f129a51
+      - SYSTEM_LOCAL=fa_IR
+      - RESENDING_MAX_TRY=5
+      - REUPLOADING_MAX_TRY=5
+      # Log config
+      - USE_GRAYLOG=2
+      - LOG_SOURCE=pg_branches_locator_bot
+      - GRAYLOG_HOST=192.168.21.113
+      - GRAYLOG_PORT=12201
+      - LOG_LEVEL=20
+      - LOG_FACILITY_NAME=pg_branches_locator_bot_facility
+      - MONITORING_HASH=cabb3f498ac5a037f669f658f1be08c3
+    depends_on:
+      - pg_branches_locator_bot
+
