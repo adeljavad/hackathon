@@ -2,18 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-First, a few callback functions are defined. Then, those functions are passed to
-the Dispatcher and registered at their respective places.
-Then, the bot is started and runs until we press Ctrl-C on the command line.
-Usage:
-Example of a bot-user conversation using ConversationHandler.
-Send /start to initiate the conversation.
-Press Ctrl-C on the command line or send a signal to the process to stop the
-bot.
+main algorithm support bot
 """
 
 import logging
-
+from config import BotConfig
 from telegram import (ReplyKeyboardMarkup, Bot)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
                           ConversationHandler)
@@ -24,27 +17,28 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger()
 
-GENDER, PHOTO, LOCATION, BIO = range(4)
+MMENUE, PHOTO, A, BIO = range(4)
 
 
 def start(bot, update):
-    reply_keyboard = [['سوالات متداول', 'پشتیبانی و رفع مشکل' ]]
-    logger.info("start called")
-    update.message.reply_text('لطفا ابتدا «سوالات متداول» را مطالعه فرمایید. در این بخش پرتکرار‌ترین سوالات به صورت کامل پاسخ داده شده‌اند.'+
-                              'در صورتی که پاسخ به سوال خود را در این بخش نیافتید و یا در فرایند ثبت‌نام خود با مشکل مواجه هستید، «درخواست پشتیبانی» را انتخاب نمایید.'
+    reply_keyboard = [['سوالات متداول', 'پشتیبانی و رفع مشکل']]
+    logger.info("شروع بات")
+    update.message.reply_text(
+        'لطفا ابتدا «سوالات متداول» را مطالعه فرمایید. در این بخش پرتکرار‌ترین سوالات به صورت کامل پاسخ داده شده‌اند.' +
+        'در صورتی که پاسخ به سوال خود را در این بخش نیافتید و یا در فرایند ثبت‌نام خود با مشکل مواجه هستید، «درخواست پشتیبانی» را انتخاب نمایید.'
         ,
         reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
 
-    return GENDER
+    return MMENUE
 
 
-def gender(bot, update):
-    logger.info("in gender")
+def mainmenue(bot, update):
+    logger.info("main menue")
     reply_keyboard = [['درباره آزمون', 'شرایط سنی حضور در آزمون']]
     user = update.message.from_user
-    logger.info("Gender of %s: %s", user.first_name, update.message.text)
-    update.message.reply_text( 'یکی از موارد زیر را انتخاب کنید.',
-        reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
+    logger.info("main menue  %s: %s", user.first_name, update.message.text)
+    update.message.reply_text('یکی از موارد زیر را انتخاب کنید.',
+                              reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
     return PHOTO
 
 
@@ -66,8 +60,6 @@ def skip_photo(bot, update):
                               'or send /skip.')
 
     return bio
-
-
 
 
 def bio(bot, update):
@@ -93,31 +85,27 @@ def error(bot, update):
 
 def main():
     # Create the Updater and pass it your bot's token.
-    bot = Bot(token="1239525175:e523a3ce66aae472c159d110ca4a24541f129a51",
-              base_url="https://tapi.bale.ai/",
+    print(BotConfig.bot_token)
+    bot = Bot(token=BotConfig.bot_token,            #   "1239525175:e523a3ce66aae472c159d110ca4a24541f129a51",
+              base_url=BotConfig.base_url ,         #   "https://tapi.bale.ai/",
               base_file_url="https://tapi.bale.ai/file/")
     updater = Updater(bot=bot)
 
-    # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
-    # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
 
         states={
-            GENDER: [RegexHandler(pattern='^(سوالات متداول|پشتیبانی و رفع مشکل|Other)$', callback=gender)],
+            MMENUE: [RegexHandler(pattern='^(سوالات متداول|پشتیبانی و رفع مشکل|Other)$', callback=mainmenue)],
 
             PHOTO: [MessageHandler(Filters.photo, photo),
-                    CommandHandler('skip', skip_photo)],
-
-            LOCATION: [MessageHandler(Filters.location, location),
-                       CommandHandler('skip', skip_location)],
+                    CommandHandler('رد کردن', skip_photo)],
 
             BIO: [MessageHandler(Filters.text, bio)]
         },
 
-        fallbacks=[CommandHandler('cancel', cancel)]
+        fallbacks=[CommandHandler('انصراف', cancel)]
     )
 
     dp.add_handler(conv_handler)
@@ -125,17 +113,7 @@ def main():
     # log all errors
     dp.add_error_handler(error)
 
-    # Start the Bot
     updater.start_polling(poll_interval=2)
-    # you can replace above line with commented below lines to use webhook instead of polling
-    # updater.bot.set_webhook(url="{}{}".format(os.getenv('WEB_HOOK_DOMAIN', "https://testwebhook.bale.ai"),
-    #                                           os.getenv('WEB_HOOK_PATH', "/get-upd")))
-    # updater.start_webhook(listen=os.getenv('WEB_HOOK_IP', ""), port=int(os.getenv('WEB_HOOK_PORT', "")),
-    #                       url_path=os.getenv('WEB_HOOK_PATH', ""))
-
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT. This should be used most of the time, since
-    # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
 
 
