@@ -10,11 +10,12 @@ from config import BotConfig
 from telegram import (ReplyKeyboardMarkup, Bot)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
                           ConversationHandler)
-
+import random
 import os
 from django.conf import settings
 from django.apps import apps
 import similarity
+
 conf = {
     'INSTALLED_APPS': [
         'django.contrib.admin',
@@ -44,11 +45,14 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger()
 
-MMENUE, MOTADAVEL, RECOM,SEND, BIO = range(5)
+MMENUE, MOTADAVEL, RECOM, SEND, BIO = range(5)
 
 supp = "پشتیبانی و رفع مشکل"
 ques = "سوالات متداول"
 tecn = "لیست متخصصین"
+
+global update_question
+update_question = ''
 
 
 def start(bot, update):
@@ -64,7 +68,7 @@ def start(bot, update):
     return MMENUE
 
 
-def mainmenue(bot, update):
+def mainmenue(bot, update, user_data):
     logger.info("main menue")
     user = update.message.from_user
     logger.info("main menue  %s: %s", user.first_name, update.message.text)
@@ -72,23 +76,20 @@ def mainmenue(bot, update):
     return RECOM
 
 
-
-def recommendation(bot, update):
+def recommendation(bot, update,user_data):
     logger.info("recommendation")
     reply_keyboard = [[]]
     faq = list(QA.objects.all().values_list('title'))
 
-    candidate_questions=[]
+    candidate_questions = []
     for l in faq:
-        print(l[0])
         candidate_questions.append(l[0])
-    print('faq:', candidate_questions)
-    text= update.message.text
 
-    similar_questions = similarity.get_top_similarity(text, candidate_questions, 2)
+    update_question = update.message.text
+    similar_questions = similarity.get_top_similarity(update_question, candidate_questions, 2)
     if len(similar_questions) != 0:
         print('similar_questions:', similar_questions)
-        reply_keyboard[0]=similar_questions
+        reply_keyboard[0] = similar_questions
         reply_keyboard[0].append('خیر')
         reply_keyboard[0].append("بازگشت")
         user = update.message.from_user
@@ -101,16 +102,25 @@ def recommendation(bot, update):
         return SEND
 
 
+def send(bot, update,user_data):
+    list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id'))
+    tecnic_id = random.choice(list1)
 
-def send(bot, update):
+    key = update.message.text.partition(' ')[2]
 
-    bot.send_message(chat_id=update.message.chat_id, text= update.message.text)
+    # Load value
+    try:
+        value = user_data[key]
+        update.message.reply_text(value)
+    except KeyError:
+        update.message.reply_text('Not found')
+
+    bot.send_message(chat_id=tecnic_id[0], text=value)
 
     update.message.reply_text('به کارشناس ارسال شد')
 
 
-
-def tecnic(bot, update):
+def tecnic(bot, update, user_data):
     logger.info("tecnic")
     reply_keyboard = [[]]
     list1 = list(Pepole.objects.all().values_list('last_name'))
@@ -120,6 +130,7 @@ def tecnic(bot, update):
         reply_keyboard[0].append(l[0])
 
     reply_keyboard[0].append("بازگشت")
+    reply_keyboard[0].append("بازگشت به منو قبل")
     update.message.reply_text('یکی از متخصصین را انتخاب کنید',
                               reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
     return MOTADAVEL
@@ -129,16 +140,12 @@ def motadavel(bot, update):
     logger.info("main menue")
     reply_keyboard = [[]]
     list1 = list(QA.objects.all().values_list('title'))
-    print(list1)
     for l in list1:
-        print(l[0])
         reply_keyboard[0].append(l[0])
-    user = update.message.from_user
-    logger.info("main menue  %s: %s", user.first_name, update.message.text)
 
-    # reply_keyboard = [['درباره آزمون', 'شرایط سنی حضور در آزمون']]
     user = update.message.from_user
-    logger.info("main menue  %s: %s", user.first_name, update.message.text)
+    logger.info("سولات متداول  %s: %s", user.first_name, update.message.text)
+
     update.message.reply_text('یکی از موارد زیر را انتخاب کنید.',
                               reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
     return MMENUE
@@ -187,15 +194,16 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            MMENUE: [RegexHandler(pattern='^({})$'.format(supp), callback=mainmenue),
-                     RegexHandler(pattern='^({})$'.format(ques), callback=motadavel),
-                     RegexHandler(pattern='^({})$'.format(tecn), callback=tecnic)],
+            MMENUE: [RegexHandler(pattern='^({})$'.format(supp), callback=mainmenue, pass_user_data=True),
+                     RegexHandler(pattern='^({})$'.format(ques), callback=motadavel, pass_user_data=True),
+                     RegexHandler(pattern='^({})$'.format(tecn), callback=tecnic, pass_user_data=True)],
 
-            MOTADAVEL: [RegexHandler(pattern='^(aa)$', callback=motadavel),
-                        CommandHandler('رد کردن', skip_photo), RegexHandler(pattern='^({})$'.format('خیر'), callback=send)],
-            RECOM: [MessageHandler(Filters.text, recommendation)],
+            MOTADAVEL: [RegexHandler(pattern='^(aa)$', callback=motadavel, pass_user_data=True),
+                        CommandHandler('رد کردن', skip_photo),
+                        RegexHandler(pattern='^({})$'.format('خیر'), callback=send)],
+            RECOM: [MessageHandler(Filters.text, recommendation, pass_user_data=True)],
 
-            SEND: [MessageHandler(Filters.text, send)],
+            SEND: [MessageHandler(Filters.text, send, pass_user_data=True)],
 
             BIO: [MessageHandler(Filters.text, bio)]
         },
