@@ -6,9 +6,12 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+User_Type= ((1,'کاربر عادی'),
+            (2, 'کارشناس'),
+            (3, 'مدیر')
+                       )
 
 
-# Create your models here.
 class Pepole(models.Model):
     # reg_phone_id=models.BigIntegerField( help_text="سریال")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name=_('owner'), null=True,
