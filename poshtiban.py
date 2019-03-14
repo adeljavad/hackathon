@@ -10,6 +10,7 @@ from config import BotConfig
 from telegram import (ReplyKeyboardMarkup, Bot)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
                           ConversationHandler)
+import datetime
 import random
 import os
 from django.conf import settings
@@ -39,13 +40,13 @@ apps.populate(settings.INSTALLED_APPS)
 
 print(BotConfig.bot_token)
 bot = Bot(token=BotConfig.bot_token,  # "1239525175:e523a3ce66aae472c159d110ca4a24541f129a51",
-              base_url=BotConfig.base_url,  # "https://tapi.bale.ai/",
-              base_file_url="https://tapi.bale.ai/file/")
+          base_url=BotConfig.base_url,  # "https://tapi.bale.ai/",
+          base_file_url="https://tapi.bale.ai/file/")
 updater = Updater(bot=bot)
 
 dp = updater.dispatcher
 
-from support.models import QA, Pepole
+from support.models import QA, Pepole, Ticket
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -58,7 +59,6 @@ MMENUE, MOTADAVEL, RECOM, SEND = range(4)
 supp = "پشتیبانی و رفع مشکل"
 ques = "سوالات متداول"
 tecn = "لیست متخصصین"
-
 
 
 def start(bot, update):
@@ -92,7 +92,8 @@ def recommendation(bot, update):
         candidate_questions.append(l[0])
 
     update_question = update.message.text
-    dp.user_data['question']=update.message.text
+    dp.user_data['question'] = update.message.text
+    dp.user_data['user_id'] = update.message.chat_id
     similar_questions = similarity.get_top_similarity(update_question, candidate_questions, 2)
     if len(similar_questions) != 0:
         print('similar_questions:', similar_questions)
@@ -112,13 +113,19 @@ def recommendation(bot, update):
 
 
 def sendsend(bot, update):
-    list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id'))
+    list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id', 'id'))
     tecnic_id = random.choice(list1)
-
     print(tecnic_id)
-    bot.send_message(chat_id=tecnic_id[0], text=dp.user_data['question'])
+    dp.user_data['tecn_id'] = tecnic_id[1]
 
-    update.message.reply_text('به کارشناس ارسال شد')
+    list1 = list(Pepole.objects.filter(user_id=dp.user_data['user_id']).values_list('id'))
+    print(list1[0][0])
+    current_time = datetime.datetime.now()
+    t=Ticket(user_id_id=list1[0][0], tecn_id=tecnic_id[1], qa_id_id=1, create_date=current_time)
+    t.save()
+
+    bot.send_message(chat_id=tecnic_id[0], text=dp.user_data['question'])
+    update.message.reply_text('به کارشناس {}ارسال شد'.format(tecnic_id[1]))
 
 
 def tecnic(bot, update):
@@ -150,8 +157,6 @@ def motadavel(bot, update):
     update.message.reply_text('یکی از موارد زیر را انتخاب کنید.',
                               reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
     return MMENUE
-
-
 
 
 def cancel(bot, update):
