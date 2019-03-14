@@ -65,6 +65,8 @@ def start(bot, update):
     # reply_keyboard = [['سوالات متداول', 'پشتیبانی و رفع مشکل']]
     reply_keyboard = [[supp, ques, tecn]]
     logger.info("شروع بات")
+    dp.user_data['tecn_id'] = 0
+    dp.user_data['tecn_baleid'] = 0
 
     current_user = list(Pepole.objects.filter(user_id=update.message.chat_id).filter(user_type=2).values_list('id'))[0][
         0]
@@ -138,11 +140,11 @@ def answer(bot, update):
 
 
 def sendsend(bot, update):
-    if dp.user_data['tecn_id'] == 0:
-        list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id', 'id'))
-        tecnic_id = random.choice(list1)
-        dp.user_data['tecn_id'] = tecnic_id[1]
-        dp.user_data['tecn_baleid'] = tecnic_id[0]
+    # if dp.user_data['tecn_id'] == 0:
+    list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id', 'id'))
+    tecnic_id = random.choice(list1)
+    dp.user_data['tecn_id'] = tecnic_id[1]
+    dp.user_data['tecn_baleid'] = tecnic_id[0]
 
     list1 = list(Pepole.objects.filter(user_id=dp.user_data['user_id']).values_list('id'))
 
