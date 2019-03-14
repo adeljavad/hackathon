@@ -26,7 +26,9 @@ services:
       - POSTGRES_HOST=pg_branches_locator_bot
       # Config
       - BASE_URL=https://tapi.bale.ai/
-      - TOKEN=1239525175:e523a3ce66aae472c159d110ca4a24541f129a51
+      - TOKEN=2031081978:ed4b5c32f1b0c4cc1edbf4bce0b652587ec164e6 #poshtiban1bot
+         #870199015:9b8c428e161036e84e6a0fd55cd198c59147a321 alipay
+         #1239525175:e523a3ce66aae472c159d110ca4a24541f129a51 سداد
       - SYSTEM_LOCAL=fa_IR
       - RESENDING_MAX_TRY=5
       - REUPLOADING_MAX_TRY=5

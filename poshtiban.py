@@ -67,9 +67,9 @@ def start(bot, update):
     logger.info("شروع بات")
     dp.user_data['tecn_id'] = 0
     dp.user_data['tecn_baleid'] = 0
-
-    current_user = list(Pepole.objects.filter(user_id=update.message.chat_id).filter(user_type=2).values_list('id'))[0][
-        0]
+    current_user = update.message.chat_id
+    # current_user = list(Pepole.objects.filter(user_id=update.message.chat_id).filter(user_type=2).values_list('id'))[0][
+    #     0]
     if current_user > 0:
         update.message.reply_text('شما در سیستم به عنوان کارشناس تعریف شده اید سوالها برای شما ارسال میگردد'
                                   ,
@@ -145,7 +145,8 @@ def sendsend(bot, update):
         t = Ticket(user_id_id=list1[0][0], tecn_id=dp.user_data['tecn_id'], qa_id_id=1, create_date=current_time)
         t.save()
 
-    bot.send_message(chat_id=dp.user_data['tecn_baleid'], text='کاربر :'+str(dp.user_data['tecn_baleid'])+' متن سوال :'+dp.user_data['question'])
+    bot.send_message(chat_id=dp.user_data['tecn_baleid'],
+                     text='کاربر :' + str(dp.user_data['tecn_baleid']) + ' متن سوال :' + dp.user_data['question'])
     update.message.reply_text('به کارشناس {}ارسال شد'.format(dp.user_data['tecn_id']))
 
 

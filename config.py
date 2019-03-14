@@ -8,7 +8,8 @@ class BotConfig:
     reports_route = "files/"
     admins = ['1630184172']
     base_url = os.environ.get('BASE_URL', None) or "https://tapi.bale.ai/"
-    bot_token = os.environ.get('TOKEN', None) or "1239525175:e523a3ce66aae472c159d110ca4a24541f129a51"
+    bot_token = os.environ.get('TOKEN', None) or "2031081978:ed4b5c32f1b0c4cc1edbf4bce0b652587ec164e6"
+    #"1239525175:e523a3ce66aae472c159d110ca4a24541f129a51"
     system_local = os.environ.get('SYSTEM_LOCAL', None) or "fa_IR"
     resending_max_try = int(os.environ.get('RESENDING_MAX_TRY', 5))
     reuploading_max_try = int(os.environ.get('REUPLOADING_MAX_TRY', 5))
