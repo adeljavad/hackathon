@@ -54,7 +54,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger()
 
-MMENUE, MOTADAVEL, RECOM, SEND,ANSWER = range(5)
+MMENUE, MOTADAVEL, RECOM, SEND, ANSWER = range(5)
 
 supp = "پشتیبانی و رفع مشکل"
 ques = "سوالات متداول"
@@ -69,7 +69,10 @@ def start(bot, update):
     current_user = list(Pepole.objects.filter(user_id=update.message.chat_id).filter(user_type=2).values_list('id'))[0][
         0]
     if current_user > 0:
-        update.message.reply_text('شما در سیستم به عنوان کارشناس تعریف شده اید سوالها برای شما ارسال میگردد')
+        update.message.reply_text('شما در سیستم به عنوان کارشناس تعریف شده اید سوالها برای شما ارسال میگردد'
+                                  ,
+                                  reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard)
+                                  )
         return ANSWER
     else:
         update.message.reply_text(
@@ -119,7 +122,7 @@ def recommendation(bot, update):
         sendsend(bot, update)
 
 
-def sendsend(bot, update):
+def answer(bot, update):
     list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id', 'id'))
     tecnic_id = random.choice(list1)
     dp.user_data['tecn_id'] = tecnic_id[1]
@@ -132,6 +135,26 @@ def sendsend(bot, update):
 
     bot.send_message(chat_id=tecnic_id[0], text=dp.user_data['question'])
     update.message.reply_text('به کارشناس {}ارسال شد'.format(tecnic_id[1]))
+
+
+def sendsend(bot, update):
+    if dp.user_data['tecn_id'] == 0:
+        list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id', 'id'))
+        tecnic_id = random.choice(list1)
+        dp.user_data['tecn_id'] = tecnic_id[1]
+        dp.user_data['tecn_baleid'] = tecnic_id[0]
+
+    list1 = list(Pepole.objects.filter(user_id=dp.user_data['user_id']).values_list('id'))
+
+    print(dp.user_data['tecn_id'])
+    print(dp.user_data['tecn_baleid'])
+
+    current_time = datetime.datetime.now()
+    t = Ticket(user_id_id=list1[0][0], tecn_id=dp.user_data['tecn_id'], qa_id_id=1, create_date=current_time)
+    t.save()
+
+    bot.send_message(chat_id=dp.user_data['tecn_baleid'], text=dp.user_data['question'])
+    update.message.reply_text('به کارشناس {}ارسال شد'.format(dp.user_data['tecn_id']))
 
 
 def tecnic(bot, update):
@@ -178,7 +201,6 @@ def error(bot, update):
     logger.warning('Update "%s" caused error "%s"', update, update.message)
 
 
-
 if __name__ == '__main__':
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
@@ -194,7 +216,10 @@ if __name__ == '__main__':
             RECOM: [MessageHandler(Filters.text, recommendation)],
 
             SEND: [MessageHandler(Filters.text, sendsend)],
-            ANSWER: [MessageHandler(Filters.text, sendsend)],
+            ANSWER: [RegexHandler(pattern='^({})$'.format(supp), callback=mainmenue),
+                     RegexHandler(pattern='^({})$'.format(ques), callback=motadavel),
+                     RegexHandler(pattern='^({})$'.format(tecn), callback=tecnic),
+                     MessageHandler(Filters.text, answer)],
 
         },
 
