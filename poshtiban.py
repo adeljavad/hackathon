@@ -37,6 +37,14 @@ conf = {
 settings.configure(**conf)
 apps.populate(settings.INSTALLED_APPS)
 
+print(BotConfig.bot_token)
+bot = Bot(token=BotConfig.bot_token,  # "1239525175:e523a3ce66aae472c159d110ca4a24541f129a51",
+              base_url=BotConfig.base_url,  # "https://tapi.bale.ai/",
+              base_file_url="https://tapi.bale.ai/file/")
+updater = Updater(bot=bot)
+
+dp = updater.dispatcher
+
 from support.models import QA, Pepole
 
 # Enable logging
@@ -45,14 +53,12 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger()
 
-MMENUE, MOTADAVEL, RECOM, SEND, BIO = range(5)
+MMENUE, MOTADAVEL, RECOM, SEND = range(4)
 
 supp = "پشتیبانی و رفع مشکل"
 ques = "سوالات متداول"
 tecn = "لیست متخصصین"
 
-global update_question
-update_question = ''
 
 
 def start(bot, update):
@@ -86,6 +92,7 @@ def recommendation(bot, update):
         candidate_questions.append(l[0])
 
     update_question = update.message.text
+    dp.user_data['question']=update.message.text
     similar_questions = similarity.get_top_similarity(update_question, candidate_questions, 2)
     if len(similar_questions) != 0:
         print('similar_questions:', similar_questions)
@@ -99,15 +106,17 @@ def recommendation(bot, update):
                                   reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
         return MOTADAVEL
     else:
-        return SEND
+        # print("not similar")
+        # return SEND
+        sendsend(bot, update)
 
 
-def send(bot, update):
+def sendsend(bot, update):
     list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id'))
     tecnic_id = random.choice(list1)
 
-
-    bot.send_message(chat_id=tecnic_id[0], text=update.user_data)
+    print(tecnic_id)
+    bot.send_message(chat_id=tecnic_id[0], text=dp.user_data['question'])
 
     update.message.reply_text('به کارشناس ارسال شد')
 
@@ -129,7 +138,7 @@ def tecnic(bot, update):
 
 
 def motadavel(bot, update):
-    logger.info("main menue")
+    logger.info("متداول")
     reply_keyboard = [[]]
     list1 = list(QA.objects.all().values_list('title'))
     for l in list1:
@@ -143,20 +152,6 @@ def motadavel(bot, update):
     return MMENUE
 
 
-def skip_photo(bot, update):
-    user = update.message.from_user
-    logger.info("User %s did not send a photo.", user.first_name)
-    update.message.reply_text('I bet you look great! Now, send me your location please, '
-                              'or send /skip.')
-    return bio
-
-
-def bio(bot, update):
-    user = update.message.from_user
-    logger.info("Bio of %s: %s", user.first_name, update.message.text)
-    update.message.reply_text('Thank you! I hope we can talk again some day.')
-
-    return ConversationHandler.END
 
 
 def cancel(bot, update):
@@ -174,14 +169,10 @@ def error(bot, update):
 
 def main():
     # Create the Updater and pass it your bot's token.
-    print(BotConfig.bot_token)
-    bot = Bot(token=BotConfig.bot_token,  # "1239525175:e523a3ce66aae472c159d110ca4a24541f129a51",
-              base_url=BotConfig.base_url,  # "https://tapi.bale.ai/",
-              base_file_url="https://tapi.bale.ai/file/")
-    updater = Updater(bot=bot)
+    pass
 
-    dp = updater.dispatcher
 
+if __name__ == '__main__':
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
 
@@ -191,13 +182,12 @@ def main():
                      RegexHandler(pattern='^({})$'.format(tecn), callback=tecnic)],
 
             MOTADAVEL: [RegexHandler(pattern='^(aa)$', callback=motadavel),
-                        CommandHandler('رد کردن', skip_photo),
-                        RegexHandler(pattern='^({})$'.format('خیر'), callback=send)],
+                        RegexHandler(pattern='^({})$'.format('خیر'), callback=sendsend)],
+
             RECOM: [MessageHandler(Filters.text, recommendation)],
 
-            SEND: [MessageHandler(Filters.text, send)],
+            SEND: [MessageHandler(Filters.text, sendsend)],
 
-            BIO: [MessageHandler(Filters.text, bio)]
         },
 
         fallbacks=[RegexHandler(pattern='^({})$'.format('بازگشت'), callback=start)]
@@ -208,9 +198,9 @@ def main():
     # log all errors
     dp.add_error_handler(error)
 
+    # dispatcher.add_error_handler(error)
+    # dispatcher.add_handler(conv_handler)
+
     updater.start_polling(poll_interval=1)
     updater.idle()
-
-
-if __name__ == '__main__':
-    main()
+    run()
