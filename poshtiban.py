@@ -125,7 +125,7 @@ def recommendation(bot, update):
 
 
 def answer(bot, update):
-    list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id', 'id'))
+    list1 = list(Ticket.objects.filter(user_type=2).values_list('user_id', 'id'))
     tecnic_id = random.choice(list1)
     dp.user_data['tecn_id'] = tecnic_id[1]
 
@@ -140,11 +140,11 @@ def answer(bot, update):
 
 
 def sendsend(bot, update):
-    # if dp.user_data['tecn_id'] == 0:
-    list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id', 'id'))
-    tecnic_id = random.choice(list1)
-    dp.user_data['tecn_id'] = tecnic_id[1]
-    dp.user_data['tecn_baleid'] = tecnic_id[0]
+    if dp.user_data['tecn_id'] == 0:
+        list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id', 'id'))
+        tecnic_id = random.choice(list1)
+        dp.user_data['tecn_id'] = tecnic_id[1]
+        dp.user_data['tecn_baleid'] = tecnic_id[0]
 
     list1 = list(Pepole.objects.filter(user_id=dp.user_data['user_id']).values_list('id'))
 
