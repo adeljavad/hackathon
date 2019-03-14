@@ -65,11 +65,17 @@ def start(bot, update):
     # reply_keyboard = [['سوالات متداول', 'پشتیبانی و رفع مشکل']]
     reply_keyboard = [[supp, ques, tecn]]
     logger.info("شروع بات")
-    update.message.reply_text(
-        'لطفا ابتدا «سوالات متداول» را مطالعه فرمایید. در این بخش پرتکرار‌ترین سوالات به صورت کامل پاسخ داده شده‌اند.' +
-        'در صورتی که پاسخ به سوال خود را در این بخش نیافتید و یا در فرایند ثبت‌نام خود با مشکل مواجه هستید، «درخواست پشتیبانی» را انتخاب نمایید.'
-        ,
-        reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
+
+    current_user = list(Pepole.objects.filter(user_id=update.message.chat_id).filter(user_type=2).values_list('id'))[0][
+        0]
+    if current_user > 0:
+        update.message.reply_text('شما در سیستم به عنوان کارشناس تعریف شده اید سوالها برای شما ارسال میگردد')
+    else:
+        update.message.reply_text(
+            'لطفا ابتدا «سوالات متداول» را مطالعه فرمایید. در این بخش پرتکرار‌ترین سوالات به صورت کامل پاسخ داده شده‌اند.' +
+            'در صورتی که پاسخ به سوال خود را در این بخش نیافتید و یا در فرایند ثبت‌نام خود با مشکل مواجه هستید، «درخواست پشتیبانی» را انتخاب نمایید.'
+            ,
+            reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard))
 
     return MMENUE
 
@@ -115,13 +121,12 @@ def recommendation(bot, update):
 def sendsend(bot, update):
     list1 = list(Pepole.objects.filter(user_type=2).values_list('user_id', 'id'))
     tecnic_id = random.choice(list1)
-    print(tecnic_id)
     dp.user_data['tecn_id'] = tecnic_id[1]
 
     list1 = list(Pepole.objects.filter(user_id=dp.user_data['user_id']).values_list('id'))
-    print(list1[0][0])
+
     current_time = datetime.datetime.now()
-    t=Ticket(user_id_id=list1[0][0], tecn_id=tecnic_id[1], qa_id_id=1, create_date=current_time)
+    t = Ticket(user_id_id=list1[0][0], tecn_id=tecnic_id[1], qa_id_id=1, create_date=current_time)
     t.save()
 
     bot.send_message(chat_id=tecnic_id[0], text=dp.user_data['question'])
