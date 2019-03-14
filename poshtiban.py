@@ -54,7 +54,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger()
 
-MMENUE, MOTADAVEL, RECOM, SEND = range(4)
+MMENUE, MOTADAVEL, RECOM, SEND,ANSWER = range(5)
 
 supp = "پشتیبانی و رفع مشکل"
 ques = "سوالات متداول"
@@ -70,6 +70,7 @@ def start(bot, update):
         0]
     if current_user > 0:
         update.message.reply_text('شما در سیستم به عنوان کارشناس تعریف شده اید سوالها برای شما ارسال میگردد')
+        return ANSWER
     else:
         update.message.reply_text(
             'لطفا ابتدا «سوالات متداول» را مطالعه فرمایید. در این بخش پرتکرار‌ترین سوالات به صورت کامل پاسخ داده شده‌اند.' +
@@ -177,10 +178,6 @@ def error(bot, update):
     logger.warning('Update "%s" caused error "%s"', update, update.message)
 
 
-def main():
-    # Create the Updater and pass it your bot's token.
-    pass
-
 
 if __name__ == '__main__':
     conv_handler = ConversationHandler(
@@ -197,6 +194,7 @@ if __name__ == '__main__':
             RECOM: [MessageHandler(Filters.text, recommendation)],
 
             SEND: [MessageHandler(Filters.text, sendsend)],
+            ANSWER: [MessageHandler(Filters.text, sendsend)],
 
         },
 
