@@ -125,18 +125,11 @@ def recommendation(bot, update):
 
 
 def answer(bot, update):
-    list1 = list(Ticket.objects.filter(user_type=2).values_list('user_id', 'id'))
-    tecnic_id = random.choice(list1)
-    dp.user_data['tecn_id'] = tecnic_id[1]
+    list1 = list(Ticket.objects.filter(tecn_id=update.message.chat_id).values_list('user_id_id', 'id'))
+    dp.user_data['uswer_id'] = list1[0][0]
 
-    list1 = list(Pepole.objects.filter(user_id=dp.user_data['user_id']).values_list('id'))
-
-    current_time = datetime.datetime.now()
-    t = Ticket(user_id_id=list1[0][0], tecn_id=tecnic_id[1], qa_id_id=1, create_date=current_time)
-    t.save()
-
-    bot.send_message(chat_id=tecnic_id[0], text=dp.user_data['question'])
-    update.message.reply_text('به کارشناس {}ارسال شد'.format(tecnic_id[1]))
+    bot.send_message(chat_id=dp.user_data['user_id'], text=update.message.text)
+    # update.message.reply_text('به کارشناس {}ارسال شد'.format(tecnic_id[1]))
 
 
 def sendsend(bot, update):
@@ -145,17 +138,14 @@ def sendsend(bot, update):
         tecnic_id = random.choice(list1)
         dp.user_data['tecn_id'] = tecnic_id[1]
         dp.user_data['tecn_baleid'] = tecnic_id[0]
+        list1 = list(Pepole.objects.filter(user_id=dp.user_data['user_id']).values_list('id'))
+        print(dp.user_data['tecn_id'])
+        print(dp.user_data['tecn_baleid'])
+        current_time = datetime.datetime.now()
+        t = Ticket(user_id_id=list1[0][0], tecn_id=dp.user_data['tecn_id'], qa_id_id=1, create_date=current_time)
+        t.save()
 
-    list1 = list(Pepole.objects.filter(user_id=dp.user_data['user_id']).values_list('id'))
-
-    print(dp.user_data['tecn_id'])
-    print(dp.user_data['tecn_baleid'])
-
-    current_time = datetime.datetime.now()
-    t = Ticket(user_id_id=list1[0][0], tecn_id=dp.user_data['tecn_id'], qa_id_id=1, create_date=current_time)
-    t.save()
-
-    bot.send_message(chat_id=dp.user_data['tecn_baleid'], text='کاربر :'+dp.user_data['tecn_baleid']+' متن سوال :'+dp.user_data['question'])
+    bot.send_message(chat_id=dp.user_data['tecn_baleid'], text='کاربر :'+str(dp.user_data['tecn_baleid'])+' متن سوال :'+dp.user_data['question'])
     update.message.reply_text('به کارشناس {}ارسال شد'.format(dp.user_data['tecn_id']))
 
 
